@@ -1,6 +1,12 @@
-FROM runpod/pytorch:2.1.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+FROM pytorch/pytorch:2.1.0-cuda12.1.0-cudnn8-devel
 
 WORKDIR /workspace
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y git curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20.x (required for AI-Toolkit Web UI)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
@@ -15,7 +21,6 @@ RUN git clone https://github.com/ostris/ai-toolkit.git /app/ai-toolkit && \
 
 # Install Python dependencies
 RUN cd /app/ai-toolkit && \
-    pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu121 && \
     pip install --no-cache-dir -r requirements.txt
 
 # Install Node.js dependencies (Web UI)
