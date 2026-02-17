@@ -2,29 +2,32 @@ FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-devel
 
 WORKDIR /workspace
 
-# Install system dependencies
+# Install system dependencies including git
 RUN apt-get update && \
-    apt-get install -y git curl && \
+    apt-get install -y git curl build-essential && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20.x (required for AI-Toolkit Web UI)
+# Install Node.js 20.x
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone AI-Toolkit
-RUN git clone https://github.com/ostris/ai-toolkit.git /app/ai-toolkit && \
-    cd /app/ai-toolkit && \
-    git submodule update --init --recursive
+# Verify installations
+RUN node --version && npm --version && git --version
+
+# Clone AI-Toolkit with submodules
+RUN git clone --recursive https://github.com/ostris/ai-toolkit.git /app/ai-toolkit
 
 # Install Python dependencies
 RUN cd /app/ai-toolkit && \
     pip install --no-cache-dir -r requirements.txt
 
-# Install Node.js dependencies (Web UI)
-RUN cd /app/ai-toolkit && npm install
+# Install Node.js dependencies with increased timeout
+RUN cd /app/ai-toolkit && \
+    npm install --verbose --fetch-timeout=60000 || \
+    (echo "First npm install failed, retrying..." && npm install --verbose --fetch-timeout=60000)
 
 # Copy setup script
 COPY setup_aitoolkit.sh /setup_aitoolkit.sh
